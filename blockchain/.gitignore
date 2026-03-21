@@ -1,0 +1,18 @@
+# Validator data
+validators/*/geth
+validators/*/keystore
+validators/*/password.txt
+validators/*/*.key
+
+# Bootnode data
+data/
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

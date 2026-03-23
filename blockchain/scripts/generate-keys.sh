@@ -26,7 +26,12 @@ done
 
 echo "Generating bootnode key..."
 mkdir -p "$BLOCKCHAIN_DIR/data/bootnode"
-bootnode -genkey "$BLOCKCHAIN_DIR/data/bootnode/bootnode.key"
+if command -v bootnode &> /dev/null; then
+    bootnode -genkey "$BLOCKCHAIN_DIR/data/bootnode/bootnode.key"
+else
+    echo "bootnode not found, generating random key..."
+    openssl rand -hex 64 > "$BLOCKCHAIN_DIR/data/bootnode/bootnode.key"
+fi
 echo "Bootnode key generated"
 echo ""
 

@@ -1,6 +1,9 @@
 # OpenCode
 opencode.md
 
+#context 
+TECHNICAL_DOCS.md
+
 # Dependencies
 node_modules/
 */node_modules/

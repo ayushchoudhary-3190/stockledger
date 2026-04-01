@@ -1,6 +1,6 @@
 # StockLedger - Technical Documentation
 
-**Last Updated:** Phase 2 Complete  
+**Last Updated:** Phase 5 Complete  
 **Project:** Blockchain-based Stock Trading Platform
 
 ---
@@ -74,20 +74,6 @@ Create a private, permissioned blockchain network for recording all transactions
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Key Geth Flags Explained:**
-| Flag | Purpose |
-|------|---------|
-| `--datadir /data` | Blockchain data storage location |
-| `--networkid 1337` | Network identifier |
-| `--syncmode full` | Full node synchronization |
-| `--http --http.port 8545` | HTTP RPC endpoint |
-| `--ws --ws.port 8546` | WebSocket endpoint |
-| `--unlock <address>` | Unlock wallet for signing |
-| `--mine` | Enable block mining |
-| `--miner.etherbase <address>` | Reward receiving address |
-| `--bootnodes` | Bootstrap peer for discovery |
-| `--allow-insecure-unlock` | Allow unlocking via HTTP (dev only) |
-
 #### 3. scripts/generate-keys.sh
 **Purpose:** Generate Ethereum account keys for each validator and bootnode.
 
@@ -98,27 +84,6 @@ for i in 1 2 3 4:
     2. Create password file: validators/validator$i/password.txt
     3. Run: geth --datadir <dir> account new --password <pwd>
     4. Extract address from keystore JSON
-
-Generate bootnode key:
-    bootnode -genkey data/bootnode/bootnode.key
-```
-
-**Output Files:**
-```
-validators/
-├── validator1/
-│   ├── keystore/
-│   │   └── UTC--...--<address>.json  # Encrypted private key
-│   └── password.txt                    # Wallet password
-├── validator2/
-│   └── ...
-├── validator3/
-│   └── ...
-├── validator4/
-│   └── ...
-data/
-└── bootnode/
-    └── bootnode.key  # Bootnode peer ID key
 ```
 
 #### 4. scripts/entrypoint.sh
@@ -127,26 +92,14 @@ data/
 **Logic:**
 ```bash
 #!/bin/bash
-# If genesis.json not in data dir, copy from app dir
 if [ ! -f /data/genesis.json ] && [ -f /app/genesis.json ]; then
     cp /app/genesis.json /data/genesis.json
 fi
-
-# Execute geth with all passed arguments
 exec geth "$@"
 ```
 
-**Why:** Ensures genesis block is available before geth starts.
-
 #### 5. scripts/init.sh
 **Purpose:** Initialize each validator's data directory with the genesis block.
-
-```bash
-for validator in 1 2 3 4:
-    geth --datadir validators/validator$i init genesis.json
-```
-
-**Why:** Every validator needs the same genesis block to be on the same chain.
 
 ---
 
@@ -160,7 +113,6 @@ Deploy token contracts on our custom blockchain for:
 ### Components Built
 
 #### 1. Token.sol (Base ERC-20 Contract)
-
 **Purpose:** Reusable ERC-20 token contract with minting/burning capabilities.
 
 ```solidity
@@ -168,39 +120,15 @@ contract Token is ERC20, Ownable {
     uint8 private _decimals;
     
     constructor(string name, string symbol, uint8 decimals_, uint256 initialSupply)
-    
     function decimals() public view override returns (uint8)
-    
     function mint(address to, uint256 amount) external onlyOwner
-    
     function burn(address from, uint256 amount) external onlyOwner
 }
 ```
 
-**Inheritance Chain:**
-```
-Token
-├── ERC20 (OpenZeppelin)
-│   ├── IERC20
-│   ├── Context
-│   └── ERC20.sol (transfer, approve, balanceOf, etc.)
-└── Ownable (OpenZeppelin)
-    └── Access control (onlyOwner)
-```
-
-**Key Functions Explained:**
-
-| Function | Visibility | Purpose |
-|----------|------------|---------|
-| `constructor` | - | Initialize token with name, symbol, decimals, initial supply |
-| `decimals()` | public view | Return token decimal places (18 = wei precision) |
-| `mint()` | external | Create new tokens (onlyOwner) |
-| `burn()` | external | Destroy tokens (onlyOwner) |
-
 **Why OpenZeppelin?** Battle-tested, audited, and provides standard interfaces.
 
 #### 2. deploy.js (Hardhat Deployment Script)
-
 **Purpose:** Deploy USD stablecoin and 3 stock tokens to the blockchain.
 
 **Initial Token Configuration:**
@@ -212,65 +140,202 @@ Token
 | TSLA | ~600 | 18 | $250 |
 | MSFT | ~428.57 | 18 | $350 |
 
-**Supply Calculation:**
-```
-For stock tokens: Supply = Pool_Liquidity / Price
-Example: AAPL = 150,000 USD / 175 = 857.14 tokens
-```
-
-**Deployment Flow:**
-```
-1. Get deployer signer
-2. Deploy StableCoin (1M tokens)
-3. For each stock (AAPL, TSLA, MSFT):
-   - Calculate initial supply
-   - Deploy Token contract
-   - Store address
-4. Save deployment addresses to JSON
-```
-
-**Output:**
-```json
-{
-  "network": "localhost",
-  "chainId": "1337",
-  "tokens": {
-    "USD": "0x...",
-    "AAPL": "0x...",
-    "TSLA": "0x...",
-    "MSFT": "0x..."
-  }
-}
-```
-
 #### 3. hardhat.config.js
-
 **Purpose:** Hardhat development framework configuration.
 
-**Key Settings:**
-```javascript
-{
-  solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: { enabled: true, runs: 200 }
+---
+
+## Phase 3: Go Backend
+
+### Purpose
+Build the server-side API for user management, trading, and pool operations.
+
+### Architecture
+```
+backend/
+├── cmd/server/main.go          # Entry point
+├── internal/
+│   ├── api/
+│   │   ├── handlers.go         # HTTP handlers
+│   │   └── routes.go          # API routes
+│   ├── config/
+│   │   └── config.go          # JSON config loader
+│   ├── database/
+│   │   └── mysql.go           # GORM connection + migrations
+│   ├── models/
+│   │   ├── user.go            # User with USD + stock balances
+│   │   ├── transaction.go     # Transaction types
+│   │   ├── pool.go            # Pool state
+│   │   └── admin_price.go     # Admin price control
+│   ├── repository/
+│   │   ├── user_repo.go
+│   │   ├── transaction_repo.go
+│   │   ├── pool_repo.go
+│   │   └── admin_price_repo.go
+│   ├── services/
+│   │   ├── wallet.go          # Register, Deposit, Withdraw
+│   │   ├── swap.go            # ExecuteSwap, InitializePools
+│   │   └── admin.go           # Admin price management
+│   ├── ammpool/
+│   │   └── engine.go          # Constant product AMM logic
+│   └── blockchain/
+│       └── client.go          # Ethereum client wrapper
+└── config.json                 # Configuration file
+```
+
+### Key Features
+
+#### User Registration (Mints 10k USD)
+```go
+func (s *WalletService) RegisterUser(walletAddress string) (*models.User, error) {
+    user := &models.User{
+        WalletAddress: walletAddress,
+        USDBalance:    10000.0, // Initial USD
     }
-  },
-  networks: {
-    localhost: {
-      url: "http://localhost:8545",
-      chainId: 1337
-    }
-  }
+    // Create user and record transaction
 }
 ```
 
-**Why these settings:**
-| Setting | Value | Reason |
-|---------|-------|--------|
-| Solidity version | 0.8.20 | Latest stable, built-in overflow checks |
-| Optimizer | enabled | Reduce bytecode size |
-| Optimizer runs | 200 | Good balance of size vs gas |
+#### AMM Engine (1% Fee)
+```go
+func (p *PoolState) CalculateSwapInput(amountIn float64, isUSDToStock bool) (float64, float64) {
+    fee := amountIn * 0.01 // 1% fee
+    amountInWithFee := amountIn - fee
+    // Constant product formula: x * y = k
+    outputAmount = p.StockReserve - (p.USDReserve * p.StockReserve / (p.USDReserve + amountInWithFee))
+    return outputAmount, fee
+}
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register user (mints 10k USD) |
+| GET | `/api/wallet/:address` | Get balance |
+| GET | `/api/wallet/:address/transactions` | Get transactions |
+| POST | `/api/swap` | Execute swap |
+| GET | `/api/pools` | List all pools |
+| GET | `/api/pools/:symbol` | Get pool details |
+| POST | `/api/admin/login` | Admin login |
+| POST | `/api/admin/price` | Update stock price |
+| GET | `/api/admin/stats` | System statistics |
+
+### Database Schema (GORM AutoMigrate)
+
+**users table:**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uint (PK) | Auto-increment |
+| wallet_address | string | Ethereum address (unique) |
+| usd_balance | float64 | USD balance |
+| aapl_balance | float64 | AAPL stock balance |
+| tsla_balance | float64 | TSLA stock balance |
+| msft_balance | float64 | MSFT stock balance |
+| created_at | timestamp | Registration time |
+| updated_at | timestamp | Last update |
+
+**transactions table:**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uint (PK) | Auto-increment |
+| user_id | uint | User reference |
+| type | string | DEPOSIT, WITHDRAW, SWAP_IN, SWAP_OUT |
+| token | string | Token symbol |
+| amount | float64 | Transaction amount |
+| price | float64 | Price at time of tx |
+| fee | float64 | Fee paid |
+| pool_id | uint | Pool reference |
+| tx_hash | string | Blockchain tx hash |
+
+**pools table:**
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uint (PK) | Auto-increment |
+| symbol | string | AAPL, TSLA, MSFT |
+| usd_reserve | float64 | USD in pool |
+| stock_reserve | float64 | Stock tokens in pool |
+| price | float64 | Current price |
+| fee_tier | float64 | 0.01 (1%) |
+| total_liquidity | float64 | Total liquidity |
+
+---
+
+## Phase 4: Next.js Frontend
+
+### Purpose
+Build the user interface for trading, portfolio management, and pool viewing.
+
+### Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Landing | `/` | Hero, features, CTA |
+| Auth | `/auth` | Register/Login (10k USD) |
+| Dashboard | `/dashboard` | Portfolio, balances |
+| Trading | `/trading` | Swap USD ↔ Stocks |
+| Pools | `/pools` | View liquidity pools |
+| Admin | `/admin` | Admin panel |
+
+### Components
+
+| Component | Description |
+|-----------|-------------|
+| Navbar.tsx | Navigation with wallet address display |
+| Wallet.tsx | Balance display (USD, AAPL, TSLA, MSFT) |
+| SwapForm.tsx | Swap interface with token selection |
+| PoolCard.tsx | Pool display with stats |
+
+### API Integration
+```typescript
+// lib/api.ts
+export const api = {
+  register: (data) => fetchAPI('/api/auth/register', { method: 'POST', body: ... }),
+  getBalance: (address) => fetchAPI(`/api/wallet/${address}`),
+  swap: (data) => fetchAPI('/api/swap', { method: 'POST', body: ... }),
+  getPools: () => fetchAPI('/api/pools'),
+  // ... more endpoints
+};
+```
+
+---
+
+## Phase 5: Admin Panel
+
+### Purpose
+Allow admins to manage synthetic stock prices and monitor system.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| Login | Simple password (admin123) |
+| System Stats | Total users, transactions, liquidity |
+| Pool Status | View all pool reserves |
+| Price Update | Change AAPL/TSLA/MSFT prices |
+| Price Alerts | Triggers when price changes > 10% |
+
+### Alert Logic
+```go
+func (s *AdminService) UpdatePrice(input *UpdatePriceInput) (*models.AdminPrice, error) {
+    // ... update price ...
+    
+    threshold := 0.10 // 10% change
+    changePercent := (input.Price - oldPrice) / oldPrice
+    if changePercent > threshold {
+        // Trigger alert
+        go s.triggerPriceAlert(input.Symbol, oldPrice, input.Price)
+    }
+}
+
+func (s *AdminService) triggerPriceAlert(symbol string, oldPrice, newPrice float64) {
+    println("ALERT: Price change detected!")
+    println("Symbol:", symbol)
+    println("Old Price:", oldPrice)
+    println("New Price:", newPrice)
+    println("Change %:", ((newPrice-oldPrice)/oldPrice)*100)
+}
+```
 
 ---
 
@@ -280,58 +345,39 @@ Example: AAPL = 150,000 USD / 175 = 857.14 tokens
 ```
 Initial Token Supply = Pool_Liquidity / Token_Price
 
-Where:
-- Pool_Liquidity = 150,000 USD (per stock pool)
-- Token_Price = Admin-set synthetic price
-
 Example (AAPL at $175):
   150,000 / 175 = 857.142857... tokens
 ```
 
-### 2. Decimal Conversion (On-Chain Math)
+### 2. AMM Constant Product Formula
+```
+x × y = k (constant product)
+
+For swap (USD → Stock):
+  outputAmount = stockReserve - (usdReserve × stockReserve / (usdReserve + inputWithFee))
+
+Where:
+  inputWithFee = input × (1 - feeTier)
+  feeTier = 0.01 (1%)
+```
+
+### 3. Decimal Conversion (On-Chain Math)
 ```
 Human Readable → On-Chain:
   amount_on_chain = amount_human × 10^decimals
 
 Example (1000 USD with 18 decimals):
   1000 × 10^18 = 1000000000000000000 wei
-
-On-Chain → Human Readable:
-  amount_human = amount_on_chain / 10^decimals
 ```
 
-### 3. Block Time Calculation (Clique PoA)
+### 4. Block Time Calculation (Clique PoA)
 ```
 Block_Time = clique.period = 1 second
-
-Blocks_Per_Day = 86400 seconds / 1 = 86,400 blocks
 ```
 
 ---
 
-## Future Integration Points
-
-### Phase 3+: Backend Integration
-The blockchain will be accessed via:
-```go
-// Go-Ethereum client connection
-client, _ := ethclient.Dial("http://localhost:8545")
-
-// Read token balance
-balance, _ := token.BalanceOf(nil, walletAddress)
-```
-
-### Phase 5+: Uniswap V3 AMM
-Stock tokens will be traded via AMM pools:
-```
-AMM Pool: USD ↔ AAPL
-Formula: x × y = k (Constant Product)
-Fee: 1% per swap
-```
-
----
-
-## Project Structure
+## Project Structure (Complete)
 
 ```
 stockledger/
@@ -343,9 +389,9 @@ stockledger/
 │   │   └── validator{1-4}/
 │   ├── data/                   # Bootnode data
 │   └── scripts/
-│       ├── generate-keys.sh     # Key generation
-│       ├── init.sh             # Blockchain initialization
-│       └── entrypoint.sh       # Docker entrypoint
+│       ├── generate-keys.sh
+│       ├── init.sh
+│       └── entrypoint.sh
 │
 ├── contracts/                   # Phase 2: Smart Contracts
 │   ├── Token.sol               # ERC-20 base contract
@@ -353,38 +399,80 @@ stockledger/
 │   ├── package.json            # Dependencies
 │   ├── scripts/
 │   │   └── deploy.js           # Deployment script
-│   └── deployments/            # Deployment addresses
+│   └── .env.example            # Environment template
 │
-├── backend/                     # Phase 3+ (To be built)
-│   ├── cmd/server/
+├── backend/                     # Phase 3: Go Backend
+│   ├── cmd/server/main.go      # Entry point
+│   ├── config.json             # Configuration
+│   ├── go.mod                  # Go module
 │   └── internal/
+│       ├── api/                # Handlers & routes
+│       ├── ammpool/            # AMM engine
+│       ├── blockchain/          # Ethereum client
+│       ├── config/             # Config loader
+│       ├── database/           # MySQL connection
+│       ├── models/             # DB models
+│       ├── repository/         # Database operations
+│       └── services/           # Business logic
 │
-├── frontend/                    # Phase 4+ (To be built)
+├── frontend/                    # Phase 4: Next.js Frontend
+│   ├── package.json            # Dependencies
+│   ├── next.config.js          # Next.js config
+│   ├── tsconfig.json           # TypeScript config
 │   ├── app/
-│   └── components/
+│   │   ├── page.tsx            # Landing
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── auth/page.tsx       # Register
+│   │   ├── dashboard/page.tsx  # Portfolio
+│   │   ├── trading/page.tsx    # Swap
+│   │   ├── pools/page.tsx      # Pool info
+│   │   └── admin/page.tsx      # Admin panel
+│   ├── components/
+│   │   ├── Navbar.tsx
+│   │   ├── Wallet.tsx
+│   │   ├── SwapForm.tsx
+│   │   └── PoolCard.tsx
+│   └── lib/
+│       └── api.ts             # API client
 │
-└── database/                    # Phase 3+ (To be built)
-    └── migrations/
+├── database/                    # Database migrations (future)
+│   └── migrations/
+│
+└── TECHNICAL_DOCS.md           # This documentation
 ```
 
 ---
 
 ## Setup Commands
 
-### Start Blockchain
+### Phase 1: Start Blockchain
 ```bash
 cd blockchain
 chmod +x scripts/*.sh
-./scripts/generate-keys.sh   # Generate validator keys
-./scripts/init.sh             # Initialize with genesis
-docker-compose up -d          # Start 5 containers
+./scripts/generate-keys.sh
+./scripts/init.sh
+docker-compose up -d
 ```
 
-### Deploy Contracts
+### Phase 2: Deploy Contracts
 ```bash
 cd contracts
 npm install
-npm run deploy:local          # Deploy to localhost
+npm run deploy:local
+```
+
+### Phase 3: Run Backend
+```bash
+cd backend
+go mod tidy
+go run cmd/server/main.go
+```
+
+### Phase 4: Run Frontend
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ---
@@ -398,10 +486,11 @@ npm run deploy:local          # Deploy to localhost
 | **Genesis Block** | The first block of a blockchain |
 | **Bootnode** | Initial peer for node discovery |
 | **Enode** | Ethereum node identifier (enode://pubkey@ip:port) |
-| **Etherbase** | Address receiving block rewards |
 | **ERC-20** | Ethereum Request for Comments #20 - Token standard |
-| **Wei** | Smallest ETH unit (10^-18 ETH) |
-| **Gwei** | Gas unit (10^-9 ETH) |
+| **AMM** | Automated Market Maker - decentralized exchange algorithm |
+| **GORM** | Go ORM - Object-Relational Mapping for Go |
+| **Gin** | Go web framework |
+| **Synthetic** | Artificially created (not real stock) |
 
 ---
 
@@ -411,3 +500,5 @@ npm run deploy:local          # Deploy to localhost
 - [ERC-20 Standard](https://eips.ethereum.org/EIPS/eip-20)
 - [OpenZeppelin Contracts](https://docs.openzeppelin.com/contracts/)
 - [Hardhat Documentation](https://hardhat.org/docs)
+- [GORM Documentation](https://gorm.io/)
+- [Next.js Documentation](https://nextjs.org/docs)

@@ -14,20 +14,24 @@ type Handler struct {
 	db            *gorm.DB
 	walletService *services.WalletService
 	swapService   *services.SwapService
+	adminService  *services.AdminService
 }
 
 func NewHandler(db *gorm.DB) *Handler {
 	userRepo := repository.NewUserRepository(db)
 	txRepo := repository.NewTransactionRepository(db)
 	poolRepo := repository.NewPoolRepository(db)
+	priceRepo := repository.NewAdminPriceRepository(db)
 
 	walletService := services.NewWalletService(userRepo, txRepo)
 	swapService := services.NewSwapService(userRepo, poolRepo, txRepo)
+	adminService := services.NewAdminService(priceRepo, poolRepo, userRepo, txRepo)
 
 	return &Handler{
 		db:            db,
 		walletService: walletService,
 		swapService:   swapService,
+		adminService:  adminService,
 	}
 }
 
@@ -140,10 +144,78 @@ func (h *Handler) GetTransactions(c *gin.Context) {
 }
 
 func (h *Handler) InitializePools(c *gin.Context) {
-	if err := h.swapService.InitializePools(); err != nil {
+	if err := h.adminService.InitializePools(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "pools initialized"})
+}
+
+// Admin Handlers
+
+type AdminLoginRequest struct {
+	Password string `json:"password" binding:"required"`
+}
+
+func (h *Handler) AdminLogin(c *gin.Context) {
+	var req AdminLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Simple password check - in production use proper auth
+	if req.Password != "admin123" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": "admin-token", "message": "logged in"})
+}
+
+type UpdatePriceRequest struct {
+	Symbol string  `json:"symbol" binding:"required"`
+	Price  float64 `json:"price" binding:"required,gt=0"`
+}
+
+func (h *Handler) UpdatePrice(c *gin.Context) {
+	var req UpdatePriceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	input := &services.UpdatePriceInput{
+		Symbol: req.Symbol,
+		Price:  req.Price,
+	}
+
+	result, err := h.adminService.UpdatePrice(input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) GetPrices(c *gin.Context) {
+	prices, err := h.adminService.GetPrices()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, prices)
+}
+
+func (h *Handler) GetAdminStats(c *gin.Context) {
+	stats, err := h.adminService.GetStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
 }

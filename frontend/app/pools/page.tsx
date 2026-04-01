@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import PoolCard from '../../components/PoolCard';
 import { api, Pool } from '../../lib/api';
@@ -106,7 +108,7 @@ export default function Pools() {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#0f0f1e',

@@ -13,7 +13,7 @@ export default function SwapForm({ walletAddress, onSwapSuccess }: SwapFormProps
   const [toToken, setToToken] = useState('AAPL');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ outputAmount: number; fee: number } | null>(null);
+  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
 
   const tokens = ['USD', 'AAPL', 'TSLA', 'MSFT'];
@@ -113,7 +113,7 @@ export default function SwapForm({ walletAddress, onSwapSuccess }: SwapFormProps
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     backgroundColor: '#16213e',
     padding: '1.5rem',

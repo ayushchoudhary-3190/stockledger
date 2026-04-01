@@ -46,7 +46,7 @@ export default function WalletDisplay({ user }: WalletDisplayProps) {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     backgroundColor: '#16213e',
     padding: '1.5rem',

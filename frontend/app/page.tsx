@@ -1,7 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Navbar from '../../components/Navbar';
-import { api } from '../../lib/api';
+import { useRouter } from 'next/navigation';
+import Navbar from '../components/Navbar';
+import { api } from '../lib/api';
 
 export default function Home() {
   const router = useRouter();
@@ -83,7 +85,7 @@ export default function Home() {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#0f0f1e',

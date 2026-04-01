@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import WalletDisplay from '../../components/Wallet';
 import { api, User } from '../../lib/api';
@@ -89,7 +91,7 @@ export default function Dashboard() {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#0f0f1e',

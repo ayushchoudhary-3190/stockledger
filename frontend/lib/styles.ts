@@ -1,0 +1,1 @@
+export const css = (styles: Record<string, any>): React.CSSProperties => styles as React.CSSProperties;

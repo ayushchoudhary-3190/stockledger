@@ -48,7 +48,7 @@ export default function PoolCard({ pool }: PoolCardProps) {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   card: {
     backgroundColor: '#16213e',
     padding: '1.5rem',

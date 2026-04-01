@@ -53,7 +53,7 @@ export default function Navbar({ currentPage, walletAddress, onNavigate, onLogou
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   navbar: {
     display: 'flex',
     justifyContent: 'space-between',

@@ -1,5 +1,7 @@
+'use client';
+
 import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 
 export default function Auth() {
@@ -76,7 +78,7 @@ export default function Auth() {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     minHeight: '100vh',
     display: 'flex',
@@ -91,7 +93,7 @@ const styles = {
     borderRadius: '16px',
     maxWidth: '500px',
     width: '100%',
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
   title: {
     color: '#00d4ff',
@@ -103,14 +105,14 @@ const styles = {
     marginBottom: '2rem',
   },
   field: {
-    textAlign: 'left',
+    textAlign: 'left' as const,
     marginBottom: '1.5rem',
   },
   label: {
-    display: 'block',
+    display: 'block' as const,
     color: 'white',
     marginBottom: '0.5rem',
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
   },
   input: {
     width: '100%',
@@ -138,12 +140,12 @@ const styles = {
     width: '100%',
     padding: '1rem',
     backgroundColor: '#00d4ff',
-    border: 'none',
+    border: 'none' as const,
     borderRadius: '8px',
     color: '#1a1a2e',
     fontSize: '1.1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
+    fontWeight: 'bold' as const,
+    cursor: 'pointer' as const,
   },
   note: {
     color: '#666',

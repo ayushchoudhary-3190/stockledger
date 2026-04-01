@@ -1,5 +1,7 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import SwapForm from '../../components/SwapForm';
 import { api, User } from '../../lib/api';
@@ -107,7 +109,7 @@ export default function Trading() {
   );
 }
 
-const styles = {
+const styles: Record<string, any> = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#0f0f1e',

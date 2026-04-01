@@ -1,0 +1,17 @@
+{
+  "server": {
+    "port": "8080",
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "password",
+    "dbname": "stockledger"
+  },
+  "blockchain": {
+    "rpc_url": "http://localhost:8545",
+    "chain_id": 1337
+  }
+}

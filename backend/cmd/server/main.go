@@ -27,7 +27,7 @@ func main() {
 	router := api.SetupRouter(db, cfg)
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = cfg.Server.Port
 	}
 
 	log.Printf("Server starting on port %s", port)

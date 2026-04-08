@@ -1,3 +1,103 @@
+📈 StockLedger
+
+A decentralized stock exchange built on a blockchain using an AMM (Automated Market Maker) with the constant product formula `x·y=k`. No order book, no central authority — trades execute directly against liquidity pools.
+
+## How it works
+
+```
+User wants to swap AAPL → MSFT
+
+Step 1:  User sends AAPL into AAPL/USD pool
+         Pool gives back USD (internal, never minted)
+
+Step 2:  That USD goes into MSFT/USD pool
+         Pool gives out MSFT to user
+
+x · y = k maintained in both pools throughout
+```
+
+## Architecture
+
+```
+                    User / Trader
+                         │
+                         ▼
+                      Router
+               (path + slippage check)
+                    │         │
+                    ▼         ▼
+             Pool AAPL    Pool MSFT       ← one per stock
+             Pool TSLA    Pool NVDA       ← identical contract, different state
+                    │
+                    ▼
+            Stock Tokens (ERC-20)
+            LP Share Tokens
+                    │
+                    ▼
+            On-chain State + Event Log    ← source of truth
+```
+
+## Key Components
+
+### AMM Pool (`x·y=k`)
+Each stock has its own pool paired against an internal USD routing token.
+```
+price        = reserveUSD / reserveStock
+amount_out   = reserveUSD - (k / (reserveStock + amount_in × 0.997))
+fee          = 0.3% per swap, stays in pool
+```
+
+### Router
+Single entry point for all trades. Chains two pool calls, enforces slippage tolerance, reverts atomically if output is below `minOut`.
+
+### Factory
+Deploys new Pool contracts when stocks are listed. Maintains a registry for the router to look up pools by symbol.
+
+### Event Indexer (off-chain)
+Consumes on-chain `Swap`, `Deposit`, `Withdraw` events via Kafka. Fans out to portfolio, analytics, and notification services with `txHash`-keyed idempotency.
+
+## Liquidity Providers
+
+LPs deposit both sides of a pool (stock + USD) and earn 0.3% of every swap.
+
+```
+deposit(500 AAPL + $75,000 USD)  →  receive LP-AAPL shares
+withdraw(LP-AAPL shares)         →  receive pool share + fees earned
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Smart Contracts | Solidity |
+| Backend | Golang |
+| Frontend | Next.js |
+| Database | PostgreSQL |
+| Event Queue | Kafka |
+| Blockchain | Custom chain |
+
+## Finance Concepts
+
+| Term | Meaning |
+|---|---|
+| AMM | Prices set by pool ratio, not order book |
+| Liquidity | Total value of tokens in a pool |
+| Slippage | Price movement caused by your own trade |
+| Impermanent loss | LP value loss when price diverges from deposit price |
+| Arbitrage | Bots that keep pool prices in sync with real market |
+
+## Getting Started
+
+```bash
+git clone https://github.com/ayushchoudhary-3190/stockledger
+cd stockledger
+go mod tidy
+docker-compose up --build
+```
+
+
+
+
 # StockLedger
 
 A blockchain-based decentralized exchange (DEX) for trading synthetic stock tokens using AMM (Automated Market Maker) architecture inspired by Uniswap V3.

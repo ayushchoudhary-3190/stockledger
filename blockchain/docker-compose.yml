@@ -36,10 +36,10 @@ services:
       --ws.addr 0.0.0.0
       --ws.port 8546
       --port 30303
-      --unlock 0x0000000000000000000000000000000000000001
+      --unlock 0xb3ef5636d5b51a4d56a839068d5f932266b35181
       --password /data/password.txt
       --mine
-      --miner.etherbase 0x0000000000000000000000000000000000000001
+      --miner.etherbase 0xb3ef5636d5b51a4d56a839068d5f932266b35181
       --miner.gaslimit 8000000
       --bootnodes enode://@bootnode:30301
       --allow-insecure-unlock
@@ -75,10 +75,10 @@ services:
       --ws.addr 0.0.0.0
       --ws.port 8546
       --port 30304
-      --unlock 0x0000000000000000000000000000000000000002
+      --unlock 0x2a4620c7e33d366f40c6fe777aeb18484ffff271
       --password /data/password.txt
       --mine
-      --miner.etherbase 0x0000000000000000000000000000000000000002
+      --miner.etherbase 0x2a4620c7e33d366f40c6fe777aeb18484ffff271
       --miner.gaslimit 8000000
       --bootnodes enode://@bootnode:30301
       --allow-insecure-unlock
@@ -114,10 +114,10 @@ services:
       --ws.addr 0.0.0.0
       --ws.port 8546
       --port 30305
-      --unlock 0x0000000000000000000000000000000000000003
+      --unlock 0x4cd59c9ec7a9e39d498589132d1d2b15bec4cdc0
       --password /data/password.txt
       --mine
-      --miner.etherbase 0x0000000000000000000000000000000000000003
+      --miner.etherbase 0x4cd59c9ec7a9e39d498589132d1d2b15bec4cdc0
       --miner.gaslimit 8000000
       --bootnodes enode://@bootnode:30301
       --allow-insecure-unlock
@@ -153,10 +153,10 @@ services:
       --ws.addr 0.0.0.0
       --ws.port 8546
       --port 30306
-      --unlock 0x0000000000000000000000000000000000000004
+      --unlock 0xd789e7da090d4d4bf4975089affdcccb634f845c
       --password /data/password.txt
       --mine
-      --miner.etherbase 0x0000000000000000000000000000000000000004
+      --miner.etherbase 0xd789e7da090d4d4bf4975089affdcccb634f845c
       --miner.gaslimit 8000000
       --bootnodes enode://@bootnode:30301
       --allow-insecure-unlock
